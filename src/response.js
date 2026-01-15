@@ -410,7 +410,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 															if (body.upList?.list?.length || body.upList?.listSecond?.length) {
 																body.upList.list = [...body.upList.list || [], ...body.upList.listSecond || []]
 																	.filter(item => {
-																		return item.live_state == 1;
+																		return item.liveState == 1;
 																	});
 																body.upList.listSecond = [];
 															} else {
