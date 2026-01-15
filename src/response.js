@@ -181,7 +181,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 											//重新获取填充位
 											const myRequest = {
 												url: $request.url,
-												headers: $request.heders,
+												headers: $request.headers,
 											};
 											await fetch(myRequest).then(response => {
 												try {
