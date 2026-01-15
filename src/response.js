@@ -220,7 +220,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 												}
 											});
 											itemsCache = Storage.getItem("@BiliBili.Index.Caches");
-											if (itemsCache.length > 0) {
+											if (itemsCache && itemsCache.length > 0) {
 												singleItem = itemsCache.pop();
 												Console.info("✅ 推荐页空缺位填充成功");
 											}
