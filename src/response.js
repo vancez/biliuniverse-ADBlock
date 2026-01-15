@@ -172,6 +172,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 										body.data.items = body.data.items.filter(fix => fix !== undefined);
 									}
 									async function fixPosition() {
+										return {};
 										let itemsCache = Storage.getItem("@BiliBili.Index.Caches");
 										let singleItem = {};
 										if (itemsCache && itemsCache.length > 0) {
