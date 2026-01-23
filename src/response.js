@@ -5,7 +5,7 @@ import setENV from "./function/setENV.mjs";
 import { PlayViewReply } from "./protobuf/bilibili/app/playurl/v1/playurl.js";
 import { DynAllReply, DynVideoReply } from "./protobuf/bilibili/app/dynamic/v2/dynamic.js";
 import { ViewReply, TFInfoReply } from "./protobuf/bilibili/app/view/v1/view.js";
-import { ViewReply as ViewUniteReply, RelatesFeedReply } from "./protobuf/bilibili/app/viewunite/v1/viewunite.js";
+import { ViewReply as ViewUniteReply, RelatesFeedReply, ViewProgressReply, ViewProgressReq } from "./protobuf/bilibili/app/viewunite/v1/viewunite.js";
 import { ModeStatusReply } from "./protobuf/bilibili/app/interface/teenagers.js";
 import { DmViewReply, DmSegMobileReply } from "./protobuf/bilibili/community/service/dm/v1/dm.js";
 import { MainListReply } from "./protobuf/bilibili/main/community/reply/v1/reply.js";
@@ -348,6 +348,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 			//Console.debug(`$response.body: ${JSON.stringify($response.body)}`);
 			let rawBody = $app === "Quantumult X" ? new Uint8Array($response.bodyBytes ?? []) : ($response.body ?? new Uint8Array());
 			//Console.debug(`isBuffer? ${ArrayBuffer.isView(rawBody)}: ${JSON.stringify(rawBody)}`);
+			let rawReqBody = $app === "Quantumult X" ? new Uint8Array($request.bodyBytes ?? []) : ($request.body ?? new Uint8Array());
 			switch (FORMAT) {
 				case "application/protobuf":
 				case "application/x-protobuf":
@@ -356,6 +357,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 				case "application/grpc":
 				case "application/grpc+proto":
 					rawBody = gRPC.decode(rawBody);
+					rawReqBody = gRPC.decode(rawReqBody);
 					// 解析链接并处理protobuf数据
 					// 主机判断
 					switch (url.hostname) {
@@ -567,6 +569,57 @@ Console.info(`FORMAT: ${FORMAT}`);
 											body = RelatesFeedReply.fromBinary(rawBody);
 											body.relates = body.relates.filter(filterRelateCard);
 											rawBody = RelatesFeedReply.toBinary(body);
+											break;
+										case "ViewProgress":
+											function av2bv(aid) {
+												const XOR_CODE = 23442827791579n;
+												const MASK_CODE = 2251799813685247n;
+												const MAX_AID = 1n << 51n;
+												const BASE = 58n;
+												const data = 'FcwAPNKTMug3GV5Lj7EJnHpWsx4tb8haYeviqBz6rkCy12mUSDQX9RdoZf';
+												const bytes = ['B', 'V', '1', '0', '0', '0', '0', '0', '0', '0', '0', '0'];
+												let bvIndex = bytes.length - 1;
+												let tmp = (MAX_AID | BigInt(aid)) ^ XOR_CODE;
+												while (tmp > 0) {
+													bytes[bvIndex] = data[Number(tmp % BigInt(BASE))];
+													tmp = tmp / BASE;
+													bvIndex -= 1;
+												}
+												[bytes[3], bytes[9]] = [bytes[9], bytes[3]];
+												[bytes[4], bytes[7]] = [bytes[7], bytes[4]];
+												return bytes.join('');
+											}
+											body = ViewProgressReply.fromBinary(rawBody);
+											const reqBody = ViewProgressReq.fromBinary(rawReqBody);
+											await fetch({
+												url: `https://bsbsb.top/api/skipSegments?videoID=${av2bv(reqBody.aid)}&cid=${reqBody.cid}&actionType=skip`,
+												headers: {
+													origin: "Loon",
+												}
+											}).then(response => {
+												try {
+													const elems = JSON.parse(response.body);
+													if (elems.length) {
+														body.videoGuide = body.videoGuide || {};
+														body.videoGuide.videoPoint = body.videoGuide.videoPoint || {};
+														body.videoGuide.videoPoint.points = body.videoGuide.videoPoint.points || [];
+														elems.forEach(ele => {
+															const endPos = Math.floor(ele.segment[1])
+															body.videoGuide.videoPoint.points.push({
+																"type": 2,
+																"from": endPos,
+																"to": endPos + 1,
+																"content": "广告结尾",
+																"cover": "",
+																"logoUrl": "",
+															})
+														});
+													}
+												} catch (e) {
+													Console.error(e, response);
+												}
+											})
+											rawBody = ViewProgressReply.toBinary(body);
 											break;
 									}
 									break;
