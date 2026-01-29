@@ -592,7 +592,7 @@ Console.info(`FORMAT: ${FORMAT}`);
 											body = ViewProgressReply.fromBinary(rawBody);
 											const reqBody = ViewProgressReq.fromBinary(rawReqBody);
 											await fetch({
-												url: `https://bsbsb.top/api/skipSegments?videoID=${av2bv(reqBody.aid)}&cid=${reqBody.cid}&actionType=skip`,
+												url: `https://bsbsb.top/api/skipSegments?videoID=${av2bv(reqBody.aid)}&cid=${reqBody.cid}&category=sponsor`,
 												headers: {
 													origin: "Loon",
 												}
